@@ -23,6 +23,8 @@ from SCons.Script import (COMMAND_LINE_TARGETS, AlwaysBuild, Builder, Default,
 env = DefaultEnvironment()
 platform = env.PioPlatform()
 
+print("rsite changes include booloader.hex /////////////////////////////////////")
+
 env.Replace(
     AR="arm-none-eabi-ar",
     AS="arm-none-eabi-as",
@@ -82,11 +84,13 @@ env.Append(
                 "-intel",
                 "$SOURCES",
                 "-intel",
+                "/home/azevedo/Work/RnD/Nordic/SDKs/nRF51_SDK_10.0.0_dc26b5e/examples/dfu/bootloader/pca10001/dual_bank_ble_s110/armgcc/_build/nrf51822_xxaa.hex",
+                "-intel",
                 "-o",
                 "$TARGET",
                 "-intel",
                 "--line-length=44"
-            ]), "Building $TARGET"),
+            ]), "Building!!! $TARGET SOURCES:$SOURCES"),
             suffix=".hex"
         )
     )
@@ -205,11 +209,18 @@ elif upload_protocol in debug_tools:
     env.Replace(
         UPLOADER="openocd",
         UPLOADERFLAGS=["-s", platform.get_package_dir("tool-openocd") or ""] +
+        # this mass erase is needed for app to run but screws bootloader
+        # however i cant run without it, is it jumping to bootload?
         debug_tools.get(upload_protocol).get("server").get("arguments", []) + [
             "-c",
             "init; halt; nrf51 mass_erase; program {$SOURCE} verify reset %s; shutdown;" %
             env.BoardConfig().get("upload.offset_address", "")
         ],
+        # debug_tools.get(upload_protocol).get("server").get("arguments", []) + [
+        #     "-c",
+        #     "program {$SOURCE} verify reset %s; shutdown;" %
+        #     env.BoardConfig().get("upload.offset_address", "")
+        # ],
         UPLOADCMD="$UPLOADER $UPLOADERFLAGS")
     upload_actions = [env.VerboseAction("$UPLOADCMD", "Uploading $SOURCE")]
 
